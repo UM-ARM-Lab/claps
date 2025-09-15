@@ -14,7 +14,7 @@ $color-primary: #007bff !default;
 $color-light: #f8f9fa !default;
 $color-white: #fff !default;
 $color-black: #000 !default;
-$color-btn: #343a40 !default;
+$color-btn: #808080 !default;
 $color-border: #dee2e6 !default;
 $color-selection: #dee2e6 !default;
 
@@ -23,7 +23,7 @@ $color-primary-dark: #33a3ff !default;
 $color-light-dark: #1b1e1f !default;
 $color-white-dark: #181a1b !default;
 $color-black-dark: #e7e5e4 !default;
-$color-btn-dark: #cbc5bf !default;
+$color-btn-dark: #868686 !default;
 $color-border-dark: false !default;
 $color-selection-dark: false !default;
 
@@ -58,6 +58,40 @@ $color-selection-dark: false !default;
 @media (max-width: 400px) {
     .katex-display {
         font-size: 0.55em; /* Scale down again at 400px */
+    }
+}
+
+/* Abstract with figure side-by-side layout */
+.abstract-with-figure {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    margin: 2rem 0;
+}
+
+.figure-column {
+    flex: 0 0 55%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.text-column {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Responsive: stack vertically on mobile */
+@media (max-width: 768px) {
+    .abstract-with-figure {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .figure-column {
+        flex: none;
+        width: 100%;
     }
 }
 

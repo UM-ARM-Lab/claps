@@ -1,85 +1,157 @@
 +++
-title = "Quantifying Aleatoric and Epistemic Dynamics Uncertainty via Local Conformal Calibration"
+title = "Lies We Can Trust: Quantifying Action Uncertainty with Inaccurate Stochastic Dynamics Through Conformalized Nonholonomic Lie Groups"
 [extra]
+display_title = "<em>Lies</em> We Can Trust: Quantifying Action Uncertainty with Inaccurate Stochastic Dynamics Through Conformalized Nonholonomic <em>Lie</em> Groups"
 authors = [
-    {name = "Luís Marques", url = "https://luis-marques.github.io/"},
+    {name = "Luís Marques", url = "https://marquesluis.com/"},
+    {name = "Maani Ghaffari", url = "https://curly.engin.umich.edu/"},
     {name = "Dmitry Berenson", url = "https://berenson.robotics.umich.edu/"}
 ]
-venue = {name = "16th International Workshop on the Algorithmic Foundations of Robotics (WAFR) 2024", url = "https://www.algorithmic-robotics.org/"}
+venue = {name = "Under Review", url = ""}
 buttons = [
-    {name = "Paper", url = "https://arxiv.org/abs/2409.08249"},
-    {name = "PDF", url = "https://arxiv.org/pdf/2409.08249"},
-    {name = "Slides", url = "https://luis-marques.github.io/slides/wafr24/"},
-    {name = "Poster", url = "https://luis-marques.github.io/assets/pdf/posterUMichAISymposium2024.pdf"}
+    {name = "ArXiv", url = ""},
+    {name = "PDF", url = ""},
+    {name = "Code", url = "https://github.com/UM-ARM-Lab/claps_code"}
 ]
 katex = true
 large_card = true
 favicon = false
 +++
 
-Whether learned, simulated, or analytical, approximations of a robot's dynamics can be inaccurate when encountering novel environments. Many approaches have been proposed to quantify the aleatoric uncertainty of such methods, i.e. uncertainty resulting from stochasticity, however these estimates alone are not enough to properly estimate the uncertainty of a model in a novel environment, where the actual dynamics can change. Such changes can induce epistemic uncertainty, i.e. uncertainty due to a lack of information/data. Accounting for *both* epistemic and aleatoric dynamics uncertainty in a theoretically-grounded way remains an open problem. We introduce **L**ocal **U**ncertainty **C**onformal **Ca**libration (LUCCa), a conformal prediction-based approach that calibrates the aleatoric uncertainty estimates provided by dynamics models to generate probabilistically-valid prediction regions of the system's state. We account for both epistemic and aleatoric uncertainty non-asymptotically, without strong assumptions about the form of the true dynamics or how it changes. The calibration is performed locally in the state-action space, leading to uncertainty estimates that are useful for planning. We validate our method by constructing probabilistically-safe plans for a double-integrator under significant changes in dynamics.
+<div class="abstract-with-figure">
 
-{% figure(alt=["LUCCA Diagram"] src=["model_final.png"] dark_invert=[true]) %}
-**Figure.** Schematic of Local Uncertainty Conformal Calibration (LUCCa). Starting from a calibrated prediction region `$\hat{\mathcal N}_{\tau, cal}$`, we propagate the state uncertainty by composing an approximate dynamics model `$\tilde f$` outputting predictive MVNs of the future state with local conformal calibration. We consider approximate dynamics where the input and output distributions are MVNs of the state, but otherwise do not restrict the structure of `$\tilde f$`.
+<div class="text-column">
+
+We propose **C**onformal **L**ie-group **A**ction **P**rediction **S**ets (**CLAPS**), a symmetry-aware conformal prediction-based algorithm that constructs, for a given action, a set guaranteed to contain the resulting system configuration at a user-defined probability.
+Our assurance holds under both aleatoric and epistemic uncertainty, non-asymptotically, and does not require strong assumptions about the true system dynamics, the uncertainty sources, or the quality of the approximate dynamics model.
+Typically, uncertainty quantification is tackled by making strong assumptions about the error distribution or magnitude, or by relying on uncalibrated uncertainty estimates --- i.e., with no link to frequentist probabilities --- which are insufficient for safe control.
+Recently, conformal prediction has emerged as a statistical framework capable of providing distribution-free probabilistic guarantees on test-time prediction accuracy.
+While current conformal methods treat robots as Euclidean points, many systems have non-Euclidean configurations, e.g., some mobile robots have `$SE(2)$`.
+In this work, we rigorously analyze configuration errors using Lie groups, extending previous Euclidean Space theoretical guarantees to `$SE(2)$`. Our experiments on a simulated Jetbot, and on a real MBot, suggest that by considering the configuration space's structure, our symmetry-informed nonconformity score leads to more volume-efficient prediction regions that represent the underlying uncertainty better than existing approaches.
+
+</div>
+
+<div class="figure-column">
+
+{% figure(alt=["CLAPS Overview"] src=["./title_figure_manual.png"]) %}
+**Title Figure.** Our proposed algorithm (**CLAPS**) constructs prediction regions `$\mathcal{C}^q$` (in C-Space) that are *marginally guaranteed* to contain the next *unknown system configuration* at a user-set probability `$(1-\alpha)$`. By considering the robot's symmetry, we can construct more *efficient* prediction regions.
 {% end %}
+</div>
 
+</div>
 
 # Problem Statement
 
-**Problem.** Given an approximation `$\tilde f$` of the system's *unknown* stochastic dynamics `$f$`, a goal region `$\mathcal G \subseteq \mathcal S$`, a safe set `$\mathscr C \subseteq \mathcal S$`, a calibration dataset of state transitions `$D_{cal}$` and an acceptable failure-rate `$\alpha \in (0,1)$`, we aim to recursively solve the following stochastic optimization problem with planning horizon `$H \in \mathbb N$`:
-```
-$$
-\begin{alignat}{3}
-&\!\min_{(u_{t},\ldots,u_{t+H-1})}        &\qquad& J(s, u, \mathcal G)\\
-&\text{subject to} &      & Y_{\tau} \sim f(\bar{X}_\tau),\quad & \forall\tau\in\{t, \ldots, t+H-1\}\\
-&               &  & \mathbb P(Y_{\tau} \in \mathscr C) \ge (1-\alpha),\quad & \forall\tau \in \{t,\ldots, t+H-1\} \\
-&               &  & u_{\tau} \in \mathcal U, s_{\tau+1} \in \mathcal S, \quad &\forall\tau\in\{t, \ldots, t+H-1\}
-\end{alignat}
-$$
-```
-&emsp; *Dynamics, (2)*: The real system evolves following the unknown stochastic dynamics `$f$`. We only have access to an approximation `$\tilde f$` and the inference transitions in `$D_{cal}$`.<br>
-&emsp; *Safety, (3)*: Our trajectory should remain probabilistically safe, which we define as requiring it to lie within a safe set `$\mathscr C$` with at least a user-specified probability. This is difficult to guarantee in general for any `$f$` and `$\tilde f$`, since our approximation can be arbitrarily wrong in deployment conditions. <br>
-&emsp;*State and Control Admissibility, (4)*: Both the control inputs and the states must belong to pre-defined sets. <br>
-&emsp;*Objective Function, (1)*: Additionally, we aim to achieve optimality relative to an objective that incorporates `$\mathcal G$` along with the state and control sequences, `$s := (s_{t+1},\ldots, s_{t+H})$` and `$u := (u_{t},\ldots,u_{t+H-1})$`. For example, `$J$` might minimize the expectation of a distance metric to `$\mathcal G$`, control effort, or epistemic-uncertainty along the state-control sequences.
+**Problem.** TBD - sumamrize key assumpt, goals, ...
 
-# LUCCa
-
-Given a dynamics predictor and a small calibration dataset, LUCCa provides probabilistically valid prediction regions for the robot's future states accounting for both aleatoric and epistemic uncertainty. We prove its validity for any finite set of calibration data, predictors outputting a multivariate normal uncertainty, any unknown true dynamics function, and uncharacterized aleatoric perturbations. LUCCa calibrates the uncertainty locally relative to the system's state-action space, leading to prediction regions that are representative of predictive uncertainty and therefore useful for planning. For the first planning step, LUCCa satisfies the safety condition (3) above. For subsequent planning steps, such a guarantee becomes more complex but we show that if the dynamics approximation is linear (actual dynamics are still unconstrained) and we can satisfy additional assumptions on the controller, then LUCCa can satisfy the safety condition (3) for all planning steps (see Appendix `$A$` for a discussion and the proof).
-
-{{ figure(alt=["LUCCA Algorithm", "Calibrated Rollout"] src=["lucca_algo.png", "calibrated_rollout.png"] dark_invert=[true, true]) }}
-
-# Experiments
-
-We conducted experiments with an MPC controller that uses LUCCa to plan short-horizon trajectories to reach a goal region (without colliding with any obstacles). We compared LUCCa with a baseline (using the same predictor but without the conformal calibration step) on a double-integrator system over four environments shown below. In the white regions the dynamics predictor corresponds to the ground truth dynamics, but in the yellow regions there is a significant mismatch (actual dynamics become lower-friction). In both areas there is aleatoric uncertainty. This dynamical system can build significant momentum, and thus underestimating the predictive uncertainty can lead to entering regions of inevitable collision. Hence, it is crucial to accurately quantify uncertainty multiple time-steps into the future. 
-
-{{ figure(src = ["./Corridor_Uncalibrated Baseline.mp4","./Corridor_LUCCa.mp4"], subcaption = ["**Uncalibrated Baseline** (Corridor Map)","**LUCCa** (Corridor Map)"], dark_invert=[false,false]) }}
+Our goal is to provide, for a given admissible action `$u_{des}$`, a C-Space prediction region `$C^q \subseteq \mathcal Q$` that provably contains the next true unknown system configuration `$q_1$` with, at
+least, a user-defined probability `$(1-\alpha)$`, i.e.
+`$ \mathbb{P}(q_1 \in \mathcal C^q ) \ge (1 − \alpha)$`,
+where `$\alpha \in (0,1)$ is the user-set acceptable failure-probability.
+Following CP literature, the likelihood is taken on average
+over the test-time scenarios, not for a specific $q_1$, and we
+assume the initial system state to be known (i.e., ˜s0 = s0).
+While purely achieving (2) is trivial, e.g., by predicting the
+entire space Cq = Q, we additionally want Cq to be as
+tight/volume-efficient as possible to make it practical for
+downstream robotic tasks such as safe control. This is a chal-
+lenging problem. We consider both aleatoric and epistemic
+uncertainty, and do not make strong assumptions about the fi-
+delity of ˜f , or the nature of the stochastic disturbances. While
+we make no claims about how efficient our prediction regions
+are, we show they can be tighter than existing methods.
 
 
-{{ figure(src = ["./Passage_Uncalibrated Baseline.mp4","./Passage_LUCCa.mp4"], subcaption = ["**Uncalibrated Baseline** (Passage Map)","**LUCCa** (Passage Map)"], dark_invert=[false,false]) }}
+# CLAPS
 
-{{ figure(src = ["./U-Turn_Uncalibrated Baseline.mp4","./U-Turn_LUCCa.mp4"], subcaption = ["**Uncalibrated Baseline** (U-Turn Map)","**LUCCa** (U-Turn Map)"], dark_invert=[false,false]) }}
+TBD - explain method, include algorithm blocks
 
-{{ figure(src = ["./L-Turn_Uncalibrated Baseline.mp4","./L-Turn_LUCCa.mp4"], subcaption = ["**Uncalibrated Baseline** (L-Turn Map)","**LUCCa** (L-Turn Map)"], dark_invert=[false,false]) }}
-
-The results suggest that using LUCCa's uncertainty estimate improves the success rate in these scenarios by avoiding collision. However, LUCCa only guarantees that `$(1-\alpha)$` percent of true states will be collision-free, so it does not provide a hard guarantee that the planned actions will result in collision-free states. We also note that the baseline did reach the goal faster when it didn't collide.
-
-{% figure(alt=["LUCCa vs Baseline Performance Table"] src=["perf_table.svg"] dark_invert=[true] style="width:100%") %}
-**Table.** Comparison of LUCCa vs baseline in four environment over 30 runs (each).
+{% figure(alt=["CLAPS Method Diagram"] src=["./method_diagram3v2.png"] dark_invert=[true]) %}
+**Method Figure.** **C**onformal **L**ie-Group **A**ction **P**rediction **S**ets | Offline: a dataset of state transitions is used jointly with an approximate dynamical model to derive a rigorous symmetry-aware probabilistic error bound on the configuration predictions. Online: our algorithm takes in a desired action `$u_{des}$` and computes a *calibrated C-Space prediction region* `$\mathcal{C}^q$` that is marginally guaranteed to contain the true configuration resulting from executing `$u_{des}$`.
 {% end %}
 
+# Experiments
+TBD - explain
 
-Details about LUCCa's computational overhead (~0.3 ms per planning step) and its empirical coverage (in agreement with the theoretical bounds) can be found in the full paper (Section `$6$`). We also include visualizations of the local conformal scaling factor in Appendix `$B$`.
+## JetBot Experiments (Simulation)
+
+put table, explain c-space below
+
+{{ figure(src = ["./cspace_videos/Isaac_Jetbot_over_confident_0300_3D_rotation.mp4", "./cspace_videos/Isaac_Jetbot_over_confident_0330_3D_rotation.mp4","./cspace_videos/Isaac_Jetbot_over_confident_0336_3D_rotation.mp4"], alt = ["C-space visualization - scenario 0300", "C-space visualization - scenario 0301"], dark_background=[true]) }}
+
+
+{{ figure(alt=["LUCCa vs Baseline Performance Table"] src=["table_jetbot.svg"] dark_invert=[true] style="width:80%") }}
+
+## MBot Experiments (Hardware)
+
+epxlain
+
+{{ figure(alt=["LUCCa in Action", "Baseline Comparison"] src=["./mbot_videos/mbot_clip1.mp4", "./mbot_videos/mbot_clip2.mp4", "./mbot_videos/mbot_clip3.mp4"] subcaption=["**LUCCa in Action** - Robot navigating with calibrated uncertainty estimates", "**Baseline Comparison** - Traditional approach without conformal calibration"]) }}
+
+explain
+
+put runtime in words.
+
+<figure class="single-video-figure">
+    <div class="single-video-wrapper">
+        <iframe
+            src="https://www.youtube.com/embed/hyddmrzfx7Y"
+            title="MBot Hardware Demonstration"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen>
+        </iframe>
+    </div>
+</figure>
+
+<style>
+.single-video-figure {
+    max-width: 1000px;
+    margin: 2rem auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.single-video-wrapper {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    border: 2px solid #e9ecef;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.single-video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.single-video-figure figcaption {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    text-align: center;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    width: 100%;
+    max-width: 1000px;
+}
+
+@media screen and (max-width: 768px) {
+    .single-video-figure {
+        margin: 1rem auto;
+    }
+}
+</style>
 
 # BibTeX <small><small>(cite this!)</small></small>
 
 ```
-@misc{marques2024quantifyingaleatoricepistemicdynamics,
-      title={Quantifying Aleatoric and Epistemic Dynamics Uncertainty via Local Conformal Calibration}, 
-      author={Luís Marques and Dmitry Berenson},
-      year={2024},
-      eprint={2409.08249},
-      archivePrefix={arXiv},
-      primaryClass={cs.RO},
-      url={https://arxiv.org/abs/2409.08249}, 
-}
+TBD
+
 ```

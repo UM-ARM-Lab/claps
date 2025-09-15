@@ -8,7 +8,7 @@
         <article itemscope itemtype="http://schema.org/BlogPosting">
 
             <header class="header">
-                <h1 itemprop="name headline">{{ this.title }}</h1>
+                <h1 itemprop="name headline">{{ this.extra.display_title | default(value=this.title) | safe }}</h1>
                 <h2>
                     <span itemprop="author">
                         {% for author in this.extra.authors %}
