@@ -1,4 +1,4 @@
-base_url = "https://um-arm-lab.github.io/lucca"
+base_url = "https://um-arm-lab.github.io/claps"
 compile_sass = true
 build_search_index = false
 generate_feeds = false

@@ -40,76 +40,49 @@ In this work, we rigorously analyze configuration errors using Lie groups, exten
 
 </div>
 
-# Problem Statement
-
-**Setting**: Let `$q\in \mathcal Q$` be the configuration of a
-robot, `$\dot q \in Tq \mathcal Q$` be
-the generalized velocity, and `$s := (q,\dot q) \in T\mathcal Q$` its state.
-We consider both holonomic systems and robots subject to
-*nonholonomic constraints*, i.e., non-integrable constraints on
-the allowable velocities. We observe
-the true dynamical system state at discrete points `$s_k := s(k\Delta t)$`, where `$\Delta t$` is the sampling time between
-measurements. We consider systems with time-invariant
-stochastic dynamics whose `$\mathcal Q$` can be represented by the
-matrix Lie group `$SE(2)$` and `$SE(3)$`. This class is broad,
-encompassing unicycles, differential drive vehicles, car-like
-systems, quadrotors, surface vessels, underwater vehicles,
-satellites, quadrupeds modeled by their center of mass,
-and so on. We write the true
-unknown dynamics of the observable discrete process as
+{% problem_columns() %}
+### Problem Setting
+Let `$q\in \mathcal Q$` be the robot configuration, `$\dot q \in T_q \mathcal Q$` the generalized velocity, and `$s := (q,\dot q) \in T\mathcal Q$` the state. We consider holonomic and *nonholonomic* systems whose `$\mathcal Q$` is the Lie group `$SE(2)$` (unicycles, car-like robots, quadrotors, surface/underwater vehicles, satellites, quadrupeds’ COM, ...). The *unknown dynamics* evolve as
 ```
 $$
-s_{k+1} = f(s_k, u_k, w_k), w_k ∼ P_{noise}, 
+s_{k+1} = f(s_k, u_k, w_k), \qquad w_k \sim P_{noise},
 $$
 ```
-where `$f$` is an *unknown* deterministic function, `$w_k$` is a
-stochastic term drawn iid from an *unknown* distribution `$P_{noise}$`, and `$u_k \in \mathbb R^m$` is the known control input. Inaccuracies in
-modeling `$f$` may arise e.g., from domain shifts between fitting
-and deployment, and result in *epistemic uncertainty*. On the
-other hand, `$w_k$` makes the dynamics stochastic, introducing
-*aleatoric uncertainty*, and may represent external disturbances
-such as wind gusts, wheel slippage, or terrain bumps. 
-
-**Objective**: Our goal is to provide, for a given admissible action `$u_{des}$`, a C-Space prediction region `$C^q \subseteq \mathcal Q$` that provably contains the next true *unknown system configuration* `$q_1$` with, at
-least, a *user-defined probability* `$(1-\alpha)$`, i.e.
+where `$f$` is *unknown*, `$w_k$` is an iid disturbance drawn from an *unknown* distribution, and `$u_k \in \mathbb R^m$` is the control input. Inaccuracies
+in modeling `$f$` may arise e.g., from domain shifts between fitting and deployment, and result in *epistemic uncertainty*. Additionally,
+`$w_k$` introduces *aleatoric uncertainty*, and may represent external disturbances such as wind gusts, wheel slippage, or terrain bumps.
+---
+### Objective
+For a given admissible action `$u_{des}$`, provide a C-Space prediction region `$C^q \subseteq \mathcal Q$` that contains the resulting (unknown) configuration `$q_1$` with probability at least `$(1-\alpha)$`:
 ```
 $$
-\mathbb{P}(q_1 \in \mathcal C^q ) \ge (1 − \alpha),
+\mathbb{P}(q_1 \in \mathcal C^q ) \ge 1 - \alpha, \quad \alpha \in (0,1).
 $$
 ```
-where `$\alpha \in (0,1)$` is the user-set acceptable failure-probability.
-While purely achieving this is trivial, e.g., by predicting the
-entire space `$C^q =\mathcal Q$`, we additionally want `$C^q$` to be as
-*tight/volume-efficient* as possible to make it practical for
-downstream robotic tasks such as *safe control*. We do not make strong assumptions about the fidelity of `$\tilde f$`, or the nature of the stochastic disturbances.
+where `$\alpha$` is the user-set acceptable failure probability. While purely achieving this goal is trivial, e.g., by predicting the entire space `$(C^q = \mathcal Q)$`, we additionally want `$C^q$` to be as *tight/volume-efficient* as possible, to make it practical for downstream robotic tasks such as *safe control*. We do not make strong assumptions about the fidelity of `$\tilde{f}$`, or the nature of the stochastic disturbances.
+{% end %}
 
 # CLAPS
 
 **CLAPS** uses a dataset of state transitions `$(D_{cal})$` to *calibrate* the uncertainty estimates provided by approximate dynamics models.
 **CLAPS** can be applied as a *post-hoc calibration layer* on top of existing Lie-algebraic Gaussian uncertainty estimators (e.g., Invariant EKF), turning their approximate covariances into *provably calibrated ones*.
-By using a *symmetry-respective score metric*, our approach produces prediction regions that are more smaller than existing conformal prediction baselines that treat the robot's configuration as Euclidean.
+By using a *symmetry-respective score metric*, our approach produces prediction regions that are more volume-efficient than existing conformal prediction baselines that treat the robot's configuration as Euclidean.
 
 {% figure(alt=["CLAPS Method Diagram"] src=["./method_diagram3v2.png"] dark_invert=[true]) %}
 **Method Figure.** **C**onformal **L**ie-Group **A**ction **P**rediction **S**ets | Offline: a dataset of state transitions is used jointly with an approximate dynamical model to derive a rigorous symmetry-aware probabilistic error bound on the configuration predictions. Online: our algorithm takes in a desired action `$u_{des}$` and computes a *calibrated C-Space prediction region* `$\mathcal{C}^q$` that is marginally guaranteed to contain the true configuration resulting from executing `$u_{des}$`.
 {% end %}
 
-The prediction region constructed by **CLAPS** `$(C^q \subseteq Q)$` can be used for probably-safe control in three main ways:
-- Configuration Check: a (sample) configuration `$g$` belongs in `$C^q$` if `$\sqrt{\log(\tilde{g}^{-1}g)^\top \tilde{\Sigma}^{-1}\log(\tilde{g}^{-1}g)} \le \chi^2_{\alpha}(\dim \mathfrak g)$` --- quick to evaluate in batch
-- C-space set: The `$C^q$` can be reconstructed by Alg. 2, for example to check if `$C^q \subseteq \mathcal Q_{safe}$`, for a known safe set `$\mathcal Q_{safe} \subseteq \mathcal Q$`.
-- Workspace set: `$C^q$` can be inflated by the robot's radius and mapped to the workspace `$(\mathbb R^2)$` to perform collision checks with known obstacles.
-
-For more details, please refer to Section `$\S$`V-C in the paper.
+The prediction region constructed by **CLAPS** `$(C^q \subseteq Q)$` can be used for probably-safe control in three main ways (for more details refer to Section `$\S$`V-C):
+1. Configuration Check: a (sample) configuration `$g$` belongs in `$C^q$` if `$\sqrt{\log(\tilde{g}^{-1}g)^\top \tilde{\Sigma}^{-1}\log(\tilde{g}^{-1}g)} \le \chi^2_{\alpha}(\dim \mathfrak g)$` --- quick to evaluate in batch
+2. C-space set: The `$C^q$` can be reconstructed by Alg. 2, for example to check if `$C^q \subseteq \mathcal Q_{safe}$`, for a known safe set `$\mathcal Q_{safe} \subseteq \mathcal Q$`.
+3. Workspace set: `$C^q$` can be inflated by the robot's radius and mapped to the workspace `$(\mathbb R^2)$` to perform collision checks with known obstacles.
 
 # Experiments
-We compare **CLAPS** in both simulation (JetBot) and hardware (MBot) against seven baselines to demonstrate its improved *efficiency* and *representation quality*.
-In both cases, we model the system as a second-order unicycle.
-We perform standard system identification to estimate the inertial properties (mass and inertia)
+We compare **CLAPS** against seven baselines in both simulation (JetBot) and hardware (MBot) to demonstrate its improved *efficiency* and *representation quality*.
+We model both systems as a second-order unicycles, and perform standard system identification to estimate the inertial properties. In all the experiments below we use `$\alpha=0.1$`.
 
-
-## JetBot Experiments (Simulation)
-
-In Isaac Sim, we independently sampled perturbations to the commanded actions to introduce aleatoric uncertainty into the system. Additionally, epistemic uncertainty arose from unmodeled effects (see paper) and imperfections in the inertial property estimation.
-
+**A) JetBot Experiments (Simulation)**<br>
+&emsp;In Isaac Sim, we independently sampled additive perturbations to `$u_{des}$`, introducing aleatoric uncertainty. This leads to the well-known banana-shaped distributions seen below. Epistemic uncertainty arose from unmodeled effects (e.g., friction), and imperfections in the mass/inertia estimation.
 The Figure below demonstrates **CLAPS**' ability to represent the underlying dynamics uncertainty of the unknown system (MC particles).
 {% figure(alt=["Workspace method comparison plot"] src=["contour_comparison_val_isaac_0007_vs_val_isaac_0590_clear.png"] dark_invert=[true] style="width:80%") %}
 **Workspace (`$\mathbb{R}^2$`) footprint**. Workspace marginalization of the C-Space regions generated by the methods, over two of the 625 JetBot validation trials. Left: lower linear and angular velocity. Right: higher velocity case.
@@ -127,20 +100,20 @@ Quantitatively, **CLAPS** achieves the highest average Intersection over Union (
 
 {{ figure(alt=["JetBot Performance Table"] src=["table_jetbot.svg"] dark_invert=[true] style="width:80%") }}
 
-Below we showcase a visualization of the C-space regions `$C^q$` constructed by the different methods in three of the 625 validation trials. The State Space (SS) baselines produce hyperellipsoids in configuration space, due to treating it as Euclidean. Instead, both InEKF and CLAPS produce symmetry-respective prediction regions, better capturing the underlying uncertainty.
+Below we visualize the C-space regions `$C^q$` constructed by the different methods in three of the 625 validation trials. The State Space (SS) baselines produce hyperellipsoids in configuration space, due to treating it as Euclidean. Instead, both the Invariant Kalman Filter (InEKF) and CLAPS produce symmetry-respective prediction regions, better capturing the underlying uncertainty.
+While the uncertainty estimates provided by the InEKF are approximate, **CLAPS** provides provably calibrated prediction regions suitable for safe-control.
+
 {{ figure(src = ["./cspace_videos/Isaac_Jetbot_over_confident_0300_3D_rotation.mp4", "./cspace_videos/Isaac_Jetbot_over_confident_0330_3D_rotation.mp4","./cspace_videos/Isaac_Jetbot_over_confident_0336_3D_rotation.mp4"], alt = ["C-space visualization - scenario 0300", "C-space visualization - scenario 0301"], dark_background=[true]) }}
 
 
-
-## MBot Experiments (Hardware)
-
-We also validated our method on an MBot, a differential-drive vehicle shown below. 
+**B) MBot Experiments (Hardware)**<br>
+&emsp;We also validated our method on an MBot, a differential-drive vehicle shown below. 
 Despite a relatively-small calibration dataset corresponding to `$\approx$`2 min of driving data `$(\lvert D_{cal}\rvert = 237)$`, our method provably satisfied the user-specified safety specifications, thanks to its *non-asymptotic guarantees*.
 **CLAPS** uses `$D_{cal}$` to derive data-driven provable (probabilistic) bounds on the uncertainty arising from both model mismatch, and inherent stochasticity.
 
 {{ figure(alt=["MBot data collection clips"] src=["./mbot_videos/mbot_clip1.mp4", "./mbot_videos/mbot_clip2.mp4", "./mbot_videos/mbot_clip3.mp4"] subcaption=["Data collection videos"]) }}
 
-The system configuration and velocity were estimated using a motion capture system. Uncertainty in the resulting configuration arises due to inaccuracies in inertial property estimation, actuation delays, center-of-mass deviation from the body-fixed origin, ground-surface imperfections, friction, network jitter, etc.
+The system configuration and velocity were estimated using a motion capture system. Uncertainty in the resulting configuration arose due to inaccuracies in inertial property estimation, actuation delays, center-of-mass deviation from the body-fixed origin, ground-surface imperfections, friction, network jitter, etc.
 The collection procedure of system transitions that make up `$D_{cal}$` and the validation set is shown below.
 <figure class="single-video-figure">
     <div class="single-video-wrapper">
