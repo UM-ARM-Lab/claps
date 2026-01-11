@@ -7,7 +7,7 @@ authors = [
     {name = "Maani Ghaffari", url = "https://curly.engin.umich.edu/"},
     {name = "Dmitry Berenson", url = "https://berenson.robotics.umich.edu/"}
 ]
-venue = {name = "Under Review", url = ""}
+venue = {name = "IEEE Robotics and Automation Letters (RA-L) 2026", url = "https://ieeexplore.ieee.org/xpl/RecentIssue.jsp?punumber=7083369"}
 buttons = [
     {name = "ArXiv", url = "https://arxiv.org/abs/2512.10294"},
     {name = "PDF", url = "https://arxiv.org/pdf/2512.10294"},
