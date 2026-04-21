@@ -15,6 +15,7 @@ buttons = [
 ]
 katex = true
 large_card = true
+card_version = "2026-04-21"
 favicon = false
 +++
 
