@@ -12,6 +12,7 @@
         <link rel="stylesheet" href="{{ get_url(path = 'main.css') | safe }}">
 
         {% if this.extra.favicon %}
+            <link rel="icon" type="image/png" href="{{ get_url(path = 'favicon.png') }}">
             <link rel="shortcut icon" type="image/x-icon" href="{{ get_url(path = 'favicon.ico') }}">
             <link rel="apple-touch-icon" href="{{ get_url(path = 'apple-touch-icon.png') }}" type="image/png">
         {% endif %}
