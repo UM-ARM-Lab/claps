@@ -1,7 +1,7 @@
 +++
 title = "Lies We Can Trust"
 [extra]
-display_title = "<em>Lies</em> We Can Trust: Quantifying Action Uncertainty with Inaccurate Stochastic Dynamics Through Conformalized Nonholonomic <em>Lie</em> Groups"
+display_title = "<em>Lies</em> We Can Trust: Quantifying Action Uncertainty with Inaccurate Stochastic Dynamics Through Conformalized Nonholonomic <em>Lie</em> groups"
 authors = [
     {name = "Luís Marques", url = "https://marquesluis.com/"},
     {name = "Maani Ghaffari", url = "https://curly.engin.umich.edu/"},
@@ -71,7 +71,7 @@ where `$\alpha$` is the user-set acceptable failure probability. While purely ac
 By using a *symmetry-respective score metric*, our approach produces prediction regions that are more volume-efficient than existing conformal prediction baselines that treat the robot's configuration as Euclidean.
 
 {% figure(alt=["CLAPS Method Diagram"] src=["./method_diagram3v2.png"] dark_invert=[true]) %}
-**Method Figure.** **C**onformal **L**ie-Group **A**ction **P**rediction **S**ets | Offline: a dataset of state transitions is used jointly with an approximate dynamical model to derive a rigorous symmetry-aware probabilistic error bound on the configuration predictions. Online: our algorithm takes in a desired action `$u_{des}$` and computes a *calibrated C-Space prediction region* `$\mathcal{C}^q$` that is marginally guaranteed to contain the true configuration resulting from executing `$u_{des}$`.
+**Method Figure.** **C**onformal **L**ie-group **A**ction **P**rediction **S**ets | Offline: a dataset of state transitions is used jointly with an approximate dynamical model to derive a rigorous symmetry-aware probabilistic error bound on the configuration predictions. Online: our algorithm takes in a desired action `$u_{des}$` and computes a *calibrated C-Space prediction region* `$\mathcal{C}^q$` that is marginally guaranteed to contain the true configuration resulting from executing `$u_{des}$`.
 {% end %}
 
 The prediction region constructed by **CLAPS** `$(C^q \subseteq Q)$` can be used for probably-safe control in three main ways (for more details refer to Section `$\S$`V-C):
