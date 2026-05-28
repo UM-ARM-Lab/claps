@@ -12,7 +12,8 @@ buttons = [
     {name = "ArXiv", url = "https://arxiv.org/abs/2512.10294"},
     {name = "PDF", url = "https://arxiv.org/pdf/2512.10294"},
     {name = "IEEE", url = "https://ieeexplore.ieee.org/abstract/document/11361082/"},
-    {name = "Code", url = "https://github.com/UM-ARM-Lab/claps_code"}
+    {name = "Code", url = "https://github.com/UM-ARM-Lab/claps_code"},
+    {name = "Poster", url = "./poster.pdf"}
 ]
 katex = true
 large_card = true
