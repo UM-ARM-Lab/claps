@@ -177,6 +177,8 @@ Our Python-implementation of **CLAPS** can run at 25 Hz, the sampling frequency 
 }
 </style>
 
+<p class="acknowledgment">The work of Maani Ghaffari was supported in part by AFOSR MURI under Grant FA9550-23-1-0400 and AFOSR YIP under Grant FA9550-25-1-0224. This work was supported in part by the Office of Naval Research under Grant N00014-24-1-2036 and NSF under Grants IIS-2113401 and IIS-2220876.</p>
+
 # BibTeX <small><small>(cite this!)</small></small>
 
 <div class="bibtex-copy-container">
